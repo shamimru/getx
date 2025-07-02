@@ -1,8 +1,12 @@
+import 'dart:convert';
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
+import 'package:http/http.dart' as http;
+
+import 'TodoModel.dart';
 
 class GetData extends StatefulWidget {
   const GetData({super.key});
@@ -12,6 +16,58 @@ class GetData extends StatefulWidget {
 }
 
 class _GetDataState extends State<GetData> {
+
+  TodoModel ? todoModel;
+  List<TodoModel> getAllData=[];
+  var url="https://6863ed8d88359a373e96e575.mockapi.io/api/p1/users";
+
+  Future fetchData() async{
+    var response= await http.get(Uri.parse(url));
+
+    var data=jsonDecode(response.body);
+    for ( var i in data){
+      print(i.toString());
+      todoModel=TodoModel(
+          name: i["name"],
+          email: i["email"],
+          id: i["id"]
+
+      );
+
+      getAllData.add(todoModel!);
+    }
+    setState(() {
+
+    });
+  }
+
+  Future <void> postData(name,email) async{
+
+    var response= await http.post(
+      Uri.parse(url),
+      headers: {'Content-Type':'application/json'},
+      body: json.encode(
+        {"name":name, "email":email},
+      ),
+    );
+
+    if(response.statusCode == 201){
+      print("Created");
+    }else{
+      print("not created");
+    }
+  }
+
+  @override
+  void initState() {
+    // TODO: implement initState
+    fetchData();
+
+    super.initState();
+  }
+
+
+
   final TextEditingController textControl = TextEditingController();
   final TextEditingController text_2_Control = TextEditingController();
 
@@ -69,6 +125,10 @@ class _GetDataState extends State<GetData> {
                                   child: OutlinedButton(
                                 onPressed: () {
                                   print(textControl.text);
+
+                                  postData(textControl.text,text_2_Control.text);
+
+                                  fetchData();
                                 },
                                 child: Text("Save"),
                               ))
@@ -107,15 +167,27 @@ class _GetDataState extends State<GetData> {
                     Row(
                       children: [
                         Text(
-                          "make a video",
+                          "${getAllData[index].name}",
                           style: TextStyle(color: Colors.white),
-                        )
+                        ),
+                        SizedBox(
+                          width: 10,
+                        ),
+                        Text(
+                          "${getAllData[index].email}",
+                          style: TextStyle(color: Colors.white),
+                        ),
+                        SizedBox(width: 20,),
+                        Text(
+                          "${getAllData[index].id}",
+                          style: TextStyle(color: Colors.white),
+                        ),
                       ],
                     )
                   ],
                 ));
           },
-          itemCount: 5,
+          itemCount: getAllData.length,
         ),
       ),
     );
